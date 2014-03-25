@@ -10,21 +10,25 @@ The collection of scripts and tools for running aria2c as a service for local in
 ### configure linux container for aria2c-serv
 
 - create linux container
-```
+```shell
 $ sudo lxc-create -n aria2c-serv -t ubuntu
-$ sudo vi /var/lib/lxc/aria2c-serv/config 
 ```
 
 - add ip address:
-``` lxc.network.ipv4 = {ip_address} ```
+```shell
+$ sudo vi /var/lib/lxc/aria2c-serv/config 
+...
+lxc.network.ipv4 = {ip_address} 
+...
+```
 
 - to install aria2c
-```
+```shell
 $ sudo apt-get install aria2
 ```
 
 - create user `aria2c`
-```
+```shell
 $ sudo useradd --system --home-dir /var/local/aria2c aria2c
 
 $ sudo mkdir -p /var/local/aria2c/store
@@ -38,18 +42,18 @@ $ sudo chown -R aria2c: /var/log/aria2c
 ```
 
 - copy in `aria2c` script to /etc/init.d/aria2c
-```
+```shell
 $ sudo cp aria2c /etc/init.d/aria2c
 ```
 
 - put the following in /etc/aria2.conf
-```
+```shell
 $ sudo cp etc/aria2c.conf /etc/aria2c.conf
 ```
 
 ## Links
 
-**Web UI**
+
 - https://github.com/binux/yaaw
 
 - http://xyne.archlinux.ca/projects/python3-aria2jsonrpc/
