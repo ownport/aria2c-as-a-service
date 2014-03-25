@@ -22,12 +22,12 @@ lxc.network.ipv4 = {ip_address}
 ...
 ```
 
-- to install aria2c
+- login to container and install aria2c
 ```shell
 $ sudo apt-get install aria2
 ```
 
-- create user `aria2c`
+- create user _aria2c_ and directories
 ```shell
 $ sudo useradd --system --home-dir /var/local/aria2c aria2c
 
@@ -41,7 +41,7 @@ $ sudo mkdir -p /var/log/aria2c
 $ sudo chown -R aria2c: /var/log/aria2c
 ```
 
-- copy in `aria2c` script to /etc/init.d/aria2c
+- copy in _aria2c_ script to /etc/init.d/aria2c
 ```shell
 $ sudo cp aria2c /etc/init.d/aria2c
 ```
