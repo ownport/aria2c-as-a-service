@@ -1,5 +1,7 @@
 # Installation
 
+**Warning!** The configation below tested only in Ubuntu environment (13.10)
+
 ## Fast installation
 
 ``` 
