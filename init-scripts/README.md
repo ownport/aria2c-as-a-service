@@ -58,3 +58,9 @@ $ sudo service aria2c status
  * aria2c is not running
 $
 ```
+
+## to run aria2c at startup:
+```
+$ sudo update-rc.d aria2c defaults
+```
+
