@@ -1,21 +1,14 @@
 # Installation
 
+## Fast installation
+
+``` 
+$ sudo ./install.sh
+```
+
 ## Manual install
 
-- create linux container
-```shell
-$ sudo lxc-create -n aria2c-serv -t ubuntu
-```
-
-- add ip address:
-```shell
-$ sudo vi /var/lib/lxc/aria2c-serv/config 
-...
-lxc.network.ipv4 = {ip_address} 
-...
-```
-
-- login to container and install aria2c
+- install aria2c
 ```shell
 $ sudo apt-get install aria2
 ```
@@ -44,3 +37,24 @@ $ sudo cp aria2c /etc/init.d/aria2c
 $ sudo cp etc/aria2c.conf /etc/aria2c.conf
 ```
 
+## Manage aria2c service
+
+```
+$ sudo service aria2c
+ * Usage: /etc/init.d/aria2c {start|stop|restart|reload|force-reload|status}
+$
+$ sudo service aria2c start
+ * Starting aria2c aria2c
+$
+$ sudo service aria2c status
+ * aria2c is running
+$
+$ sudo service aria2c restart
+ * Restarting aria2c aria2c
+$ sudo service aria2c stop
+ * Stopping aria2c aria2c                                           [ OK ] 
+$
+$ sudo service aria2c status
+ * aria2c is not running
+$
+```
