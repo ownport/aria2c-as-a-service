@@ -2,6 +2,8 @@
 
 **Warning!** The configation below tested only in Ubuntu environment (13.10)
 
+- download [installation package](https://github.com/ownport/aria2c-as-a-service/archive/master.zip)
+
 ## Fast installation
 
 ``` 
