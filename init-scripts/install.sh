@@ -11,10 +11,9 @@ useradd --system --home-dir /var/local/aria2c aria2c
 
 echo '- creation directories and assigning rights' 
 mkdir -p /var/local/aria2c/store
-touch /var/local/aria2c/session
-
 chown -R aria2c: /var/local/aria2c
 chmod -R ug=rwx,o=rx /var/local/aria2c
+touch /var/local/aria2c/session
 
 mkdir -p /var/log/aria2c
 chown -R aria2c: /var/log/aria2c
