@@ -25,7 +25,7 @@ import httplib
 from pprint import pprint
 
 
-class Aria2cJsonClient(object):
+class LegacyClient(object):
     
     def __init__(self, client_id=None, uri=None, username=None, password=None):
         '''
@@ -312,33 +312,4 @@ class Aria2cJsonClient(object):
         '''
         return self.send_request('forceShutdown')
 
-
-if __name__ == '__main__':
-    
-    client = Aria2cJsonClient(client_id='aria2c-client', uri='http://localhost:6800', username='aria2c', password='aria2c')
-    
-    urls = [
-        'http://brb.to/get/dl/9aayuuflvh80gegsm194jkfix/Wood+%D0%9C%D0%B0%D1%81%D1%82%D0%B5%D1%80+2014+%E2%84%962.pdf',
-        'http://brb.to/get/dl/9aayuuflvj9u3gays99ui547t/Wood+%D0%9C%D0%B0%D1%81%D1%82%D0%B5%D1%80+2014+%E2%84%961.pdf',
-        'http://brb.to/get/dl/9aayuuflvj9u4ofz1ahhcwk9l/UserAndLINUX_02-2014.pdf',
-        'http://brb.to/get/dl/9aayuuflvh80get3jaycvr4ih/UserAndLINUX_03-2014.pdf',
-        'http://brb.to/get/dl/9aayuuflvi99fw88lqdfmhpop/Android_Magazine_UK_33_2014.pdf',
-        'http://brb.to/get/dl/9aayuuflvi99e6wubw7bxsmkp/Android_Magazine_UK_34_2014.pdf',
-        'http://brb.to/get/dl/9aayuuflvhkni3p7940rbt0eh/Android_Magazine_UK_35_2014.pdf',
-    ]
-    
-    jobs = list()
-    for url in urls:
-        jobs.append(client.add_uri([url,]))
-    
-    time.sleep(2)
-    pprint(client.tell_active())
-    pprint(client.tell_waiting(0, 100))
-    pprint(client.tell_stopped(0, 100))
-    
-    time.sleep(3)
-    client.purge_download_result()
-    pprint(client.tell_active())
-    pprint(client.tell_waiting(0, 100))
-    pprint(client.tell_stopped(0, 100))
     
