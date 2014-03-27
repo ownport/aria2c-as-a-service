@@ -11,6 +11,15 @@ operated in command-line. The supported protocols are HTTP(S), FTP, BitTorrent (
 Installation of [init-scripts and configs](https://github.com/ownport/aria2c-as-a-service/tree/master/init-scripts) for 
 running aria2c as service
 
+`aria2clib` is simple library, the main goal is simplify interface to control downloading of files. Just 4 methods are
+supported:
+
+- get()
+- put()
+- delete()
+- stats()
+
+
 ### for developers
 
 there's needed to install `nose` and `coverage`
