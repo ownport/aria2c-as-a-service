@@ -176,7 +176,8 @@ class LegacyClient(object):
         completedLength is less than completedLength in aria2.tellStatus() method. This is because completedLength 
         in aria2.getFiles() only calculates completed pieces. On the other hand, completedLength in aria2.tellStatus() 
         takes into account of partially completed piece.
-        - selected: true if this file is selected by --select-file option. If --select-file is not specified or this is single torrent or no torrent download, this value is always true. Otherwise false.
+        - selected: true if this file is selected by --select-file option. If --select-file is not specified or this is 
+        single torrent or no torrent download, this value is always true. Otherwise false.
         - uris: Returns the list of URI for this file. The element of list is the same struct used in aria2.getUris() method.
         '''
         return self.send_request('getFiles', [gid,])    
