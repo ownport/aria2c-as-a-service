@@ -28,7 +28,9 @@ class SimpleClient(object):
     def __init__(self, client_id=None, uri=None, username=None, password=None):
         ''' __init__
         '''
-        self._client = Aria2cJsonClient(client_id=client_id, uri=uri, username=username, password=password)
+        if not client_id:
+            raise RuntimeError('client_id is not defined')
+        self._client = LegacyClient(client_id=client_id, uri=uri, username=username, password=password)
     
     
     def _make_gid(self, url):
