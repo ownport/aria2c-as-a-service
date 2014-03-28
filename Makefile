@@ -1,3 +1,10 @@
+test-all:
+	@ nosetests
+
+test-all-with-coverage:
+	@ nosetests --with-coverage
+
+
 aria2c-start:
 	@ echo '- Starting aria2c as daemon with RPC support'
 	@ aria2c --enable-rpc --daemon --dir=store
@@ -11,19 +18,17 @@ aria2c-stop:
 aria2c-status:
 	@ ps aux | grep aria2c | grep 'daemon' | grep -v '/bin/sh'
 
+dev-server-start:
+	@ ./tests/dev-server.sh start
 
+dev-server-stop:
+	@ ./tests/dev-server.sh stop
 
-test-server-start:
-	@ ./tests/test-server.sh start
+dev-server-status:
+	@ ./tests/dev-server.sh status
 
-test-server-stop:
-	@ ./tests/test-server.sh stop
+dev-server-restart:
+	@ ./tests/dev-server.sh restart
 
-test-server-status:
-	@ ./tests/test-server.sh status
-
-test-server-restart:
-	@ ./tests/test-server.sh restart
-
-
-			
+	
+	
