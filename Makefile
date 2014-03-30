@@ -1,34 +1,38 @@
-test-all:
-	@ nosetests
+aria2c-server-start:
+	@ ./tests/bin/aria2c-server.sh start
 
-test-all-with-coverage:
-	@ nosetests --with-coverage
+aria2c-server-stop:
+	@ ./tests/bin/aria2c-server.sh stop
 
+aria2c-server-status:
+	@ ./tests/bin/aria2c-server.sh status
 
-aria2c-start:
-	@ echo '- Starting aria2c as daemon with RPC support'
-	@ aria2c --enable-rpc --daemon --dir=store
-	@ echo '- Done'
+aria2c-server-restart:
+	@ ./tests/bin/aria2c-server.sh restart
 
-aria2c-stop:
-	@ echo '- Stoppind aria2c'
-	@ killall aria2c
-	@ echo '- Done'
-
-aria2c-status:
-	@ ps aux | grep aria2c | grep 'daemon' | grep -v '/bin/sh'
 
 dev-server-start:
-	@ ./tests/dev-server.sh start
+	@ ./tests/bin/dev-server.sh start
 
 dev-server-stop:
-	@ ./tests/dev-server.sh stop
+	@ ./tests/bin/dev-server.sh stop
 
 dev-server-status:
-	@ ./tests/dev-server.sh status
+	@ ./tests/bin/dev-server.sh status
 
 dev-server-restart:
-	@ ./tests/dev-server.sh restart
+	@ ./tests/bin/dev-server.sh restart
 
+
+test-all: aria2c-server-restart dev-server-restart
+	@ rm -f tests/store/*
+	@ sleep 2
+	@ nosetests --cover-package=aria2clib --verbosity=1 --cover-erase=1
+
+test-all-with-coverage: aria2c-server-restart dev-server-restart
+	@ rm -f tests/store/*
+	@ sleep 2
+	@ nosetests --with-coverage --cover-package=aria2clib  --verbosity=1 --cover-erase
+	
 	
 	

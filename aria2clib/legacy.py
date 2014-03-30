@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # aria2c python library for JSON-RPC
 #
@@ -17,12 +18,42 @@
 # - [JSON-RPC 2.0 Specification](http://www.jsonrpc.org/specification)
 #
 
+import re
 import json
 import time
+import base64
 import urllib2
 import httplib
 
 from pprint import pprint
+
+JSON_RPC_VERSION = '2.0'
+ARIA2C_PREFIX = 'aria2'
+GLOBAL_STATS_FIELDS = [u'downloadSpeed', u'numActive', u'numStopped', u'numWaiting', u'uploadSpeed']
+GLOBAL_OPTION_FIELDS = [
+    u'follow-torrent', u'help', u'uri-selector', u'enable-rpc', u'enable-http-keep-alive',
+    u'max-overall-download-limit', u'no-conf', u'bt-min-crypto-level', u'max-concurrent-downloads',
+    u'conf-path', u'max-download-result', u'no-netrc', u'peer-id-prefix', u'stop', u'max-resume-failure-tries',
+    u'async-dns', u'force-save', u'daemon', u'max-overall-upload-limit', u'continue', u'enable-mmap', 
+    u'timeout', u'rpc-passwd', u'max-download-limit', u'no-file-allocation-limit', u'dir', u'enable-dht6',
+    u'allow-piece-length-change', u'bt-tracker-connect-timeout', u'show-console-readout', u'human-readable',
+    u'bt-stop-timeout', u'seed-ratio', u'use-head', u'follow-metalink', u'show-files', u'listen-port',
+    u'dht-listen-port', u'retry-wait', u'file-allocation', u'connect-timeout', u'bt-request-peer-speed-limit',
+    u'quiet', u'log-level', u'rpc-max-request-size', u'bt-enable-lpd', u'bt-max-peers', u'auto-file-renaming',
+    u'ftp-type', u'rpc-secure', u'metalink-preferred-protocol', u'user-agent', u'disable-ipv6', u'http-no-cache',
+    u'max-connection-per-server', u'remote-time', u'log', u'bt-metadata-only', u'piece-length', u'rpc-listen-port',
+    u'disk-cache', u'conditional-get', u'console-log-level', u'ftp-reuse-connection', u'dry-run', 
+    u'rpc-listen-all', u'event-poll', u'allow-overwrite', u'remove-control-file', u'truncate-console-readout',
+    u'max-file-not-found', u'rpc-user', u'deferred-input', u'rpc-allow-origin-all', u'dht-message-timeout',
+    u'check-certificate', u'http-auth-challenge', u'realtime-chunk-checksum', u'always-resume', 
+    u'save-session-interval', u'reuse-uri', u'http-accept-gzip', u'bt-remove-unselected-file', u'max-upload-limit',
+    u'rpc-save-upload-metadata', u'bt-require-crypto', u'check-integrity', u'proxy-method', u'ca-certificate',
+    u'bt-tracker-timeout', u'max-tries', u'ftp-pasv', u'bt-tracker-interval', u'enable-dht', u'split',
+    u'min-split-size', u'stream-piece-selector', u'bt-save-metadata', u'metalink-enable-unique-protocol',
+    u'download-result', u'dht-file-path6', u'hash-check-only', u'server-stat-timeout', u'enable-peer-exchange',
+    u'enable-http-pipelining', u'summary-interval', u'bt-max-open-files', u'dht-file-path', u'auto-save-interval',
+    u'parameterized-uri', u'bt-hash-check-seed', u'bt-seed-unverified', u'lowest-speed-limit',
+]
 
 
 class LegacyClient(object):
@@ -35,29 +66,50 @@ class LegacyClient(object):
         
         - uri = host an port of aria2c server in the format `http://<host>:<port>`
         '''
+        self._json_rpc_version = JSON_RPC_VERSION
+        self._aria2c_prefix = ARIA2C_PREFIX
+
+        if not client_id:
+            raise RuntimeError('client_id is not defined')
         self.client_id = client_id
+            
+        if not uri:
+            raise RuntimeError('URI is not defined')
+
+        if not isinstance(uri, (str, unicode)):
+            raise RuntimeError('Incorrect URI type: %s' % type(uri))
+        
+        elif not re.match(r'http://.+?:\d+', uri):
+            raise RuntimeError('incorrect URI format: %s' % uri)
         self.uri = uri + '/jsonrpc'
+        
         self.username = username
         self.password = password
-        
-        self._json_rpc_version = '2.0'
-        self._aria2c_prefix = 'aria2'
+            
 
-
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def send_request(self, command, parameters=[]):
         ''' send JSON-RPC request
         '''
+
         jsonreq = json.dumps({
                     'jsonrpc':  self._json_rpc_version, 
                     'id':       self.client_id, 
                     'method':   '%s.%s' % (self._aria2c_prefix, command),
                     'params':   parameters,
         })
-        c = urllib2.urlopen(self.uri, jsonreq)
+        
+        request = urllib2.Request(self.uri, jsonreq)
+        if self.username and self.password:
+            base64string = base64.encodestring('%s:%s' % (self.username, self.password)).replace('\n', '')
+            request.add_header('Authorization', 'Basic %s' % base64string)
+
+        c = urllib2.urlopen(request)
         response = json.loads(c.read())
         return response
         
 
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def add_uri(self, uris, options=[], position=None):
         ''' This method adds new HTTP(S)/FTP/BitTorrent Magnet URI. 
         
@@ -71,12 +123,14 @@ class LegacyClient(object):
         queue. If position is not given or position is larger than the size of the queue, it is appended at the end of 
         the queue. 
         
-        This method returns GID of registered download.
+        This method returns GID of registered download. GID calculates as md5 hash of first uri
         '''
+        # TODO support few uris to the same file
+        
         if isinstance(uris, (unicode, str)):
             uris = [uris]
 
-        return self.send_request('addUri', [uris,])    
+        return self.send_request('addUri', [uris, options])    
 
 
     def remove(self, gid):
@@ -85,7 +139,7 @@ class LegacyClient(object):
         of removed download.
         '''
         
-        return self.send_request('remove', [gid])
+        return self.send_request('remove', [gid,])
 
     
     def force_remove(self, gid):
@@ -93,7 +147,7 @@ class LegacyClient(object):
         that this method removes download without any action which takes time such as contacting BitTorrent 
         tracker
         '''
-        return self.send_request('forceRemove', [gid])
+        return self.send_request('forceRemove', [gid,])
         
 
     def pause(self, gid):
@@ -102,7 +156,7 @@ class LegacyClient(object):
         As long as the status is paused, the download is not started. To change status to waiting, use aria2.unpause() 
         method. This method returns GID of paused download.
         '''
-        return self.send_request('pause', [gid])
+        return self.send_request('pause', [gid,])
         
 
     def pause_all(self):
@@ -130,7 +184,7 @@ class LegacyClient(object):
         ''' This method changes the status of the download denoted by gid from paused to waiting. This makes 
         the download eligible to restart. gid is of type string. This method returns GID of unpaused download.
         '''
-        return self.send_request('unpause', [gid])
+        return self.send_request('unpause', [gid,])
 
 
     def unpause_all(self):
@@ -139,7 +193,7 @@ class LegacyClient(object):
         '''
         return self.send_request('unpauseAll')
                 
-
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def tell_status(self, gid, keys=[]):
         ''' This method returns download progress of the download denoted by gid. 
         
@@ -152,7 +206,7 @@ class LegacyClient(object):
         the list of keys is available by http://aria2.sourceforge.net/manual/en/html/aria2c.html#aria2.tellStatus
         '''
 
-        return self.send_request('tellStatus', [gid,])    
+        return self.send_request('tellStatus', [gid, keys])    
 
     
     def get_uris(self, gid):
@@ -197,6 +251,7 @@ class LegacyClient(object):
         return self.send_request('getServers', [gid,])    
         
     
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def tell_active(self, keys=[]):
         ''' This method returns the list of active downloads. The response is of type array and its element is the 
         same struct returned by aria2.tellStatus() method. For keys parameter, 
@@ -205,7 +260,8 @@ class LegacyClient(object):
         return self.send_request('tellActive', [keys])    
 
 
-    def tell_waiting(self, offset, num, keys=[]):
+    # IMPLEMENTED IN SIMPLE_CLIENT
+    def tell_waiting(self, offset=0, num=100, keys=[]):
         ''' This method returns the list of waiting download, including paused downloads. 
         
         - offset is of type integer and specifies the offset from the download waiting at the front. 
@@ -226,7 +282,8 @@ class LegacyClient(object):
         return self.send_request('tellWaiting', [offset, num, [keys]])    
 
 
-    def tell_stopped(self, offset, num, keys=[]):
+    # IMPLEMENTED IN SIMPLE_CLIENT
+    def tell_stopped(self, offset=0, num=100, keys=[]):
         ''' This method returns the list of stopped download. offset is of type integer and specifies the offset 
         from the oldest download. num is of type integer and specifies the number of downloads to be returned. 
         For keys parameter, please refer to aria2.tellStatus() method.
@@ -238,6 +295,7 @@ class LegacyClient(object):
         return self.send_request('tellStopped', [offset, num, [keys]])    
                 
     
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def get_option(self, gid):
         ''' This method returns options of the download denoted by gid. The response is of type struct. Its key is 
         the name of option. The value type is string. Note that this method does not return options which have no 
@@ -246,6 +304,7 @@ class LegacyClient(object):
         return self.send_request('getOption', [gid,])    
 
 
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def get_global_stats(self):
         ''' This method returns global statistics such as overall download and upload speed. The response is of 
         type struct and contains following keys. The value type is string.
@@ -258,7 +317,8 @@ class LegacyClient(object):
         '''
         return self.send_request('getGlobalStat')
 
-
+    
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def get_global_option(self):
         ''' This method returns global options. The response is of type struct. Its key is the name of option. 
         The value type is string. Note that this method does not return options which have no default value and 
@@ -282,6 +342,7 @@ class LegacyClient(object):
         return self.send_request('removeDownloadResult', [gid,])    
 
 
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def get_version(self):
         ''' This method returns version of the program and the list of enabled features. 
         The response is of type struct and contains following keys.
@@ -291,7 +352,8 @@ class LegacyClient(object):
         '''
         return self.send_request('getVersion')
 
-
+    
+    # IMPLEMENTED IN SIMPLE_CLIENT
     def get_session_info(self):
         ''' This method returns session information. 
         The response is of type struct and contains following key.

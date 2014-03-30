@@ -31,3 +31,7 @@ log
 
 # pid
 run
+
+# temp storage
+tests/store/*
+

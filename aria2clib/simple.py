@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # simplified aria2c python library for JSON-RPC
 #
@@ -18,6 +19,7 @@
 #
 
 from hashlib import md5
+from urllib2 import HTTPError
 
 from legacy import LegacyClient
 
@@ -28,24 +30,92 @@ class SimpleClient(object):
     def __init__(self, client_id=None, uri=None, username=None, password=None):
         ''' __init__
         '''
-        if not client_id:
-            raise RuntimeError('client_id is not defined')
         self._client = LegacyClient(client_id=client_id, uri=uri, username=username, password=password)
     
     
-    def _make_gid(self, url):
+    def _calc_gid(self, url):
         ''' return gid as hash of url
-        '''
-        return md5(url).hexdigest()
         
+        Hash calculated based on md5 algorithm with length limitation up to 16 characters
+        '''
+        return md5(url).hexdigest()[:16]
+        
+
+    def _queues_files(self):
+        ''' return the list of active, waiting, stopped queues
+        
+        flatting `uris` fields 
+        '''
+        result = list()
+        
+        queues = (
+            (u'active', self._client.tell_active()), 
+            (u'waiting', self._client.tell_waiting()),
+            (u'stopped', self._client.tell_stopped()),
+        )
+        
+        for (status, queue) in queues:
+            queue = queue.get('result', [])
+            for f in queue:
+                for file_info in f.get('files', []):
+                    file_info[u'status'] = status
+                    file_info = self._flatting_file_info(file_info)
+                    file_info[u'gids'] = [self._calc_gid(u) for u in file_info[u'uris']]
+                result.append(file_info)
+                    
+        return result
+
+
+    def _flatting_file_info(self, info):
+        ''' return flatted file info
+        '''
+        uris = dict()
+        for uri in info['uris']:
+            if uri[u'uri'] not in uris:
+                uris[uri[u'uri']] = [uri['status'],]
+            else:
+                uris[uri[u'uri']].append(uri['status'])
+        info[u'uris'] = uris
+        return info 
+
+    
+    def _update_urls(self, url):
+        ''' return the list of pairs: url and GID (md5 hash of url)
+        
+        The GID must be hex string of 16 characters, thus [0-9a-zA-Z] are allowed and leading zeros must not be 
+        stripped. The GID all 0 is reserved and must not be used. The GID must be unique, otherwise error is 
+        reported and the download is not added. 
+        '''
+        urls = list()
+        
+        if isinstance(url, (unicode, str)):
+            urls.append(url)
+        elif isinstance(url, (list, tuple)):
+            urls.extend(url)
+        else:
+            raise RuntimeError('Incorrect url type: %s' % type(url))
+
+        urls = [(u, self._calc_gid(u)) for u in urls]
+        return urls        
+
     
     def get(self, gid=[]):
         ''' get status of files
         '''
-        return []
+        files = self._queues_files()
+        if isinstance(gid, (unicode, str)):
+            return [f for f in files if gid in f[u'gids']]
+            
+        elif isinstance(gid, (list, tuple)) and gid:
+            result = list()
+            for f in files:
+                result.extend([f for g in gid if g in f[u'gids']])
+            return result
+        else:
+            return files
     
     
-    def put(self, url, params=[], pause=False):
+    def put(self, urls, params={}, pause=False):
         ''' put url(s) to queue for downloading
         
         if pause=True, If the download is active, the download is placed on the first position of waiting queue. 
@@ -53,13 +123,16 @@ class SimpleClient(object):
         for those urls
         '''
         
-        result = self._client.add_uri(url, params)        
-
+        result = list()
+        for u in self._update_urls(urls):    
+            params['gid'] = u[1]
+            response = self._client.add_uri(u[0], params)
+            result.append(response.get('result', None))
         return result
     
     
-    def delete(self, url, force=False):
-        ''' delete file(s) by url(s)
+    def delete(self, gid, force=False):
+        ''' delete file(s) by gid(s)
         
         - gid can be as single value or a list of gids
         
@@ -67,25 +140,38 @@ class SimpleClient(object):
         BitTorrent tracker
         - force=Falce (default), it is stopped download at first than download becomes removed.
         '''
-        urls = list()
+        gids = list()
        
         # handle list or single url(s)       
-        if isinstance(url, (string, unicode, int)):
-            urls.append(url)
+        if isinstance(gid, (str, unicode)):
+            gids.append(gid)
         else:
-            urls.extend(url)
-        
-        for url in urls:
+            gids.extend(gid)
+
+        result = list()
+        for gid in gids:
             if force:
-                print self._client.force_remove(url)
-                continue
-            print self._client.remove(url)
+                try:
+                    response = self._client.force_remove(gid).get('result', None)
+                except HTTPError:
+                    pass
+            else:        
+                try:
+                    response = self._client.remove(gid).get('result', None)
+                except HTTPError:
+                    pass
+            result.append((gid, self._client.remove_download_result(gid).get('result', None)))
+        return result
 
 
     def stats(self):
         ''' return aria2c stats
         '''
-        
-        return []            
+        response = {}
+        response['version'] = self._client.get_version().get('result', None)
+        response['session_info'] = self._client.get_session_info().get('result', None)
+        response['global_stats'] = self._client.get_global_stats().get('result', None)
+        response['global_option'] = self._client.get_global_option().get('result', None)
+        return response 
 
         
