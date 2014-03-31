@@ -93,7 +93,7 @@ class SimpleClientTest(unittest.TestCase):
         stats = client.stats()
         self.assertEqual(set(stats['version'].keys()), set([u'version', u'enabledFeatures']))
         self.assertEqual(set(stats['session_info'].keys()), set([u'sessionId']))
-        self.assertEqual(set(stats['global_stats'].keys()), set(GLOBAL_STATS_FIELDS))
-        self.assertEqual(set(stats['global_option'].keys()), set(GLOBAL_OPTION_FIELDS))
+        self.assertEqual(set(stats['global_stats'].keys()).issubset(set(GLOBAL_STATS_FIELDS)), True)
+        self.assertEqual(set(stats['global_option'].keys()).issubset(set(GLOBAL_OPTION_FIELDS)), True)
 
         

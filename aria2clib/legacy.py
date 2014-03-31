@@ -53,6 +53,7 @@ GLOBAL_OPTION_FIELDS = [
     u'download-result', u'dht-file-path6', u'hash-check-only', u'server-stat-timeout', u'enable-peer-exchange',
     u'enable-http-pipelining', u'summary-interval', u'bt-max-open-files', u'dht-file-path', u'auto-save-interval',
     u'parameterized-uri', u'bt-hash-check-seed', u'bt-seed-unverified', u'lowest-speed-limit',
+    u'on-download-complete', u'on-download-error', u'on-download-pause', u'on-download-start', u'on-download-stop',
 ]
 
 
