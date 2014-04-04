@@ -35,3 +35,6 @@ run
 # temp storage
 tests/store/*
 
+# service dirs
+data/*
+tests/json/*
