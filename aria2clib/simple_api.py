@@ -21,7 +21,7 @@
 from hashlib import md5
 from urllib2 import HTTPError
 
-from legacy import LegacyClient
+from legacy_api import LegacyClient
 
 
 class SimpleClient(object):
@@ -75,6 +75,7 @@ class SimpleClient(object):
                 uris[uri[u'uri']] = [uri['status'],]
             else:
                 uris[uri[u'uri']].append(uri['status'])
+                uris[uri[u'uri']] = list(set(uris[uri[u'uri']]))
         info[u'uris'] = uris
         return info 
 
