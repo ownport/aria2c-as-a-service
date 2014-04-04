@@ -27,7 +27,7 @@ dev-server-restart:
 test-all: aria2c-server-restart dev-server-restart
 	@ rm -f tests/store/*
 	@ sleep 2
-	@ nosetests --cover-package=aria2clib --verbosity=1 --cover-erase=1
+	@ nosetests --cover-package=aria2clib --verbosity=1 --cover-erase
 
 test-all-with-coverage: aria2c-server-restart dev-server-restart
 	@ rm -f tests/store/*
